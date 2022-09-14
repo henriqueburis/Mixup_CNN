@@ -79,7 +79,7 @@ else:
 
 
 transform_test = transforms.Compose([
-    transforms.Resize((256,256)),
+    transforms.Resize((32,32)),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
@@ -93,7 +93,7 @@ trainloader = torch.utils.data.DataLoader(trainset,
 
 testset = datasets.CIFAR10(root='~/data', train=False, download=True,
                            transform=transform_test)
-testloader = torch.utils.data.DataLoader(testset, batch_size=100,
+testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size,
                                          shuffle=False, num_workers=8)
 
 
@@ -235,10 +235,10 @@ def test(epoch):
             inputs, targets = inputs.cuda(), targets.cuda()
         inputs, targets = Variable(inputs, volatile=False), Variable(targets)
         outputs = net(inputs)
-        loss = criterion(outputs, targets)
+        #loss = criterion(outputs, targets)
 
         #test_loss += loss.data[0]
-        test_loss += loss
+        #test_loss += loss
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
@@ -290,7 +290,7 @@ if not os.path.exists(logname):
 """
 for epoch in range(start_epoch, args.epoch):
     train_loss, reg_loss, train_acc = train(epoch)
-    test_loss, test_acc = test(epoch)
+    #test_loss, test_acc = test(epoch)
     adjust_learning_rate(optimizer, epoch)
     #with open(logname, 'a') as logfile:
         #logwriter = csv.writer(logfile, delimiter=',')
