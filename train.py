@@ -24,9 +24,9 @@ import torchvision.models as models
 from utils import progress_bar
 from torchvision.utils import save_image
 import matplotlib.pyplot as plt
-from sklearn.manifold import TSNE
-from matplotlib.colors import ListedColormap
-import time 
+#from sklearn.manifold import TSNE
+#from matplotlib.colors import ListedColormap
+#import time 
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
@@ -84,7 +84,7 @@ transform_test = transforms.Compose([
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 
-"""
+
 trainset = datasets.CIFAR10(root='~/data', train=True, download=True,
                             transform=transform_train)
 trainloader = torch.utils.data.DataLoader(trainset,
@@ -96,8 +96,9 @@ testset = datasets.CIFAR10(root='~/data', train=False, download=True,
 testloader = torch.utils.data.DataLoader(testset, batch_size=100,
                                          shuffle=False, num_workers=8)
 
-"""
 
+
+"""
 path_train_xl = os.path.abspath("cifar10_Mixup/train")
 path_test = os.path.abspath("cifar10_Mixup/test")
 
@@ -112,6 +113,7 @@ testset = datasets.ImageFolder(path_test, transform=transform_test)
 testloader = torch.utils.data.DataLoader(testset, batch_size=32,
                                          shuffle=False, num_workers=3)
 
+"""
 
 print('==> Building model..')
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -200,13 +202,7 @@ def train(epoch):
         inputs_mixup, targets_a, targets_b = map(Variable, (inputs_mixup,
                                                       targets_a, targets_b))
 
-        #for it in range(len(inputs_mixup)):
-            #save_image(torch.from_numpy(np.array(inputs[it].cpu())), path+'/'+local+'/img_'+str(epoch)+'_'+str(batch_idx)+'_A_'+str(it)+'.png',normalize=True)
-
         outputs = net(inputs_mixup)
-
-        #for it in range(len(outputs)):
-            #fe_mixup.appends(outputs.cpu())
 
         loss = mixup_criterion(criterion, outputs, targets_a, targets_b, lam)
         train_loss += loss
@@ -228,16 +224,6 @@ def train(epoch):
 
 
 
-
-
-
-
-
-
-
-
-
-"""
 def test(epoch):
     global best_acc
     net.eval()
@@ -267,93 +253,6 @@ def test(epoch):
     if acc > best_acc:
         best_acc = acc
     return (test_loss/batch_idx, 100.*correct/total)
-"""
-
-fe_ = []
-fe_pred = []
-
-fe_train = []
-pred_ = []
-
-def fe_mixup():
-    net.eval()
-    train_loss = 0
-    reg_loss = 0
-    correct = 0
-    total = 0
-    for batch_idx, (inputs, targets) in enumerate(testloader):
-        if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda()
-
-        inputs_mixup, targets_a, targets_b, lam = mixup_data(inputs, targets,
-                                                       args.alpha, use_cuda)
-        inputs_mixup, targets_a, targets_b = map(Variable, (inputs_mixup,
-                                                      targets_a, targets_b))
-
-        #for it in range(len(inputs_mixup)):
-            #save_image(torch.from_numpy(np.array(inputs[it].cpu())), path+'/'+local+'/img_'+str(batch_idx)+'_A_'+str(it)+'.png',normalize=True)
-
-        outputs = net(inputs_mixup)
-
-        for it in range(len(outputs)):
-            fe_.append(outputs[it].cpu().detach().numpy())
-            fe_pred.append(11)
-
-        #loss = mixup_criterion(criterion, outputs, targets_a, targets_b, lam)
-        #train_loss += loss
-        _, predicted = torch.max(outputs.data, 1)
-
-        for it in range(len(outputs)):
-            fe_train.append(outputs[it].cpu().detach().numpy())
-            pred_.append(predicted[it].cpu().detach().numpy())
-
-        
-        total += targets.size(0)
-        correct += (lam * predicted.eq(targets_a.data).sum().float()
-                    + (1 - lam) * predicted.eq(targets_b.data).sum().float())
-
-        #optimizer.zero_grad()
-        #loss.backward()
-        #optimizer.step()
-
-        progress_bar(batch_idx, len(trainloader),
-                     'Loss: %.3f | Reg: %.5f | Acc: %.3f%% (%d/%d)'
-                     % (train_loss/(batch_idx+1), reg_loss/(batch_idx+1),
-                        100.*correct/total, correct, total))
-    return (train_loss/batch_idx, reg_loss/batch_idx, 100.*correct/total)
-
-
-def fe_base():
-    net.eval()
-    train_loss = 0
-    reg_loss = 0
-    correct = 0
-    total = 0
-    for batch_idx, (inputs, targets) in enumerate(testloader):
-        if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda()
-
-        outputs = net(inputs)
-        _, predicted = torch.max(outputs.data, 1)
-
-        for it in range(len(outputs)):
-            fe_.append(outputs[it].cpu().detach().numpy())
-            fe_pred.append(targets[it].cpu().detach().numpy())    
-        
-        total += targets.size(0)
-        correct += (predicted.eq(targets.data).sum().float())
-
-        progress_bar(batch_idx, len(trainloader),
-                     'Loss: %.3f | Reg: %.5f | Acc: %.3f%% (%d/%d)'
-                     % (train_loss/(batch_idx+1), reg_loss/(batch_idx+1),
-                        100.*correct/total, correct, total))
-    return (train_loss/batch_idx, reg_loss/batch_idx, 100.*correct/total)
-
-
-
-
-
-
 
 
 
@@ -391,22 +290,22 @@ if not os.path.exists(logname):
 """
 for epoch in range(start_epoch, args.epoch):
     train_loss, reg_loss, train_acc = train(epoch)
-    #test_loss, test_acc = test(epoch)
+    test_loss, test_acc = test(epoch)
     adjust_learning_rate(optimizer, epoch)
     #with open(logname, 'a') as logfile:
         #logwriter = csv.writer(logfile, delimiter=',')
         #logwriter.writerow([epoch, train_loss, reg_loss, train_acc, test_loss,
                             #test_acc])
-print("Feature extration")
-fe_base()
-fe_mixup()
+
 
 
 #colors = ListedColormap(["green", "blue", "red"])
 #classes = ['Mixup','airplane','horse']
-colors = ListedColormap(["blue", "red"])
-classes = ['Mixup','Originais']
+#colors = ListedColormap(["blue", "red"])
+#classes = ['Mixup','Originais']
 
+
+"""
 print("T-SNE")
 view_tsne_fe = TSNE(n_components=2).fit_transform(fe_)
 scatter_ = plt.scatter(view_tsne_fe[:,0], view_tsne_fe[:,1], c=fe_pred, alpha=0.2, cmap=colors)
@@ -427,3 +326,4 @@ plt.legend(handles=scatter_.legend_elements()[0], labels=classes_)
 plt.savefig(str(time.time())+'tsne_fe_train.png', dpi=120)
 plt.close()
 
+"""
