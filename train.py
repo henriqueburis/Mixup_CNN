@@ -117,9 +117,11 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=32,
 
 print('==> Building model..')
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-net = models.resnet50(pretrained=False)
+#net = models.resnet50(pretrained=True)
+net = models.resnet50(weights='ResNet50_Weights.DEFAULT')
 modules = list(net.children())[:-1]
 modules.append(nn.Flatten())
+modules.append(nn.Linear(net.fc.in_features,10))
 net = nn.Sequential(*modules)
 net = net.to(device)
 
